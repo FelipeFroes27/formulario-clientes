@@ -14,7 +14,7 @@ scope = [
 ]
 
 creds = Credentials.from_service_account_info(
-    st.secrets["teste"],
+    st.secrets["google_credentials"],
     scopes=scope
 )
 
