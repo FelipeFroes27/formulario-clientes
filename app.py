@@ -2,6 +2,8 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 
+st.write(st.secrets.keys())
+
 # CONFIGURAÇÕES DA PÁGINA
 st.set_page_config(page_title="Cadastro de Clientes", page_icon="📝")
 st.title("📝 Formulário de Cadastro")
