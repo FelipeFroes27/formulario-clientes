@@ -2,8 +2,6 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 
-st.write(st.secrets.keys())
-
 # CONFIGURAÇÕES DA PÁGINA
 st.set_page_config(page_title="Cadastro de Clientes", page_icon="📝")
 st.title("📝 Formulário de Cadastro")
@@ -16,7 +14,7 @@ scope = [
 ]
 
 creds = Credentials.from_service_account_info(
-    st.secrets["GOOGLE_CREDENTIALS"],
+    st.secrets["teste"],
     scopes=scope
 )
 
