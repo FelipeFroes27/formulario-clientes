@@ -68,6 +68,7 @@ with st.form("form_cliente"):
 
     # Campo de texto para o nome do cliente
     nome = st.text_input("Nome")
+    empresa = st.text_input("Empresa")
 
     # Campo numérico para idade
     # Aceita valores entre 0 e 120
@@ -99,7 +100,7 @@ if enviar:
     else:
         # Adiciona uma nova linha na planilha
         # Cada valor vai para uma coluna
-        planilha.append_row([nome, idade, email])
+        planilha.append_row([nome, idade, email, empresa])
 
         # Mensagem de sucesso exibida no site
         st.success("Dados enviados com sucesso!")
