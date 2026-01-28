@@ -4,15 +4,10 @@ from google.oauth2.service_account import Credentials
 
 
 # ===============================
-# CONFIGURAÇÕES DO FORMULÁRIO
+# CONFIGURAÇÕES
 # ===============================
 
 PLANILHA_NOME = "clientes_formulario"
-
-
-# ===============================
-# CONFIGURAÇÃO DA PÁGINA
-# ===============================
 
 st.set_page_config(page_title="Formulário de Avaliação", page_icon="📝")
 st.title("📝 Formulário de Avaliação Pessoal")
@@ -20,7 +15,7 @@ st.write("Responda com sinceridade. Não existem respostas certas ou erradas.")
 
 
 # ===============================
-# AUTENTICAÇÃO GOOGLE
+# GOOGLE SHEETS
 # ===============================
 
 scope = [
@@ -38,6 +33,33 @@ planilha = client.open(PLANILHA_NOME).sheet1
 
 
 # ===============================
+# CABEÇALHO FIXO
+# ===============================
+
+CAMPOS = [
+    "O que você pensa a seu respeito?",
+    "Como foi o seu primeiro relacionamento amoroso?",
+    "Qual papel você exerce na vida hoje?",
+    "Vítima ou Responsável?",
+    "Qual o ganho secundário?",
+    "Em quais situações você desempenha o papel de vítima?",
+    "Em quais situações você desempenha o papel de responsável?",
+    "Se considera vitoriosa(o) ou derrotada(o)?",
+    "Perfil nos relacionamentos",
+    "Quem é o culpado pelos seus problemas?",
+    "Sente raiva ou rancor de alguém?",
+    "Raiva direcionada a quem?",
+    "Sente-se pressionada(o)?",
+    "De que maneira se sente pressionada(o)?",
+    "Você se acha uma pessoa controladora?",
+    "Sente-se inferior aos outros?",
+    "Por que se sente inferior?",
+    "Raiva", "Medo", "Culpa", "Tristeza", "Ansiedade",
+    "Ciúme", "Frustração", "Solidão", "Cansaço"
+]
+
+
+# ===============================
 # FORMULÁRIO
 # ===============================
 
@@ -45,110 +67,53 @@ respostas = {}
 
 with st.form("formulario_avaliacao"):
 
-    # -------- SEÇÃO 1 --------
     st.subheader("🧠 Autopercepção")
 
-    respostas["O que você pensa a seu respeito?"] = st.text_area(
-        "O que você pensa a seu respeito?"
-    )
+    respostas[CAMPOS[0]] = st.text_area(CAMPOS[0])
+    respostas[CAMPOS[1]] = st.text_area(CAMPOS[1])
+    respostas[CAMPOS[2]] = st.text_area("Se você avaliasse sua atuação na vida, qual papel que mais caberia a você hoje?")
 
-    respostas["Como foi o seu primeiro relacionamento amoroso?"] = st.text_area(
-        "Como foi o seu primeiro relacionamento amoroso?"
-    )
+    papel = st.radio("Você se vê mais como:", ["Vítima", "Responsável"])
+    respostas[CAMPOS[3]] = papel
 
-    respostas["Qual papel você exerce na vida hoje?"] = st.text_area(
-        "Se você avaliasse sua atuação na vida, qual papel que mais caberia a você hoje?"
-    )
-
-    papel = st.radio(
-        "Você se vê mais como:",
-        ["Vítima", "Responsável"]
-    )
-    respostas["Vítima ou Responsável?"] = papel
+    respostas[CAMPOS[4]] = ""
+    respostas[CAMPOS[5]] = ""
+    respostas[CAMPOS[6]] = ""
 
     if papel == "Vítima":
-        respostas["Qual o ganho secundário?"] = st.text_area("Qual o ganho secundário?")
-        respostas["Em quais situações você desempenha o papel de vítima?"] = st.text_area(
-            "Em quais situações você desempenha o papel de vítima?"
-        )
-        respostas["Em quais situações você desempenha o papel de responsável?"] = ""
+        respostas[CAMPOS[4]] = st.text_area(CAMPOS[4])
+        respostas[CAMPOS[5]] = st.text_area(CAMPOS[5])
     else:
-        respostas["Qual o ganho secundário?"] = ""
-        respostas["Em quais situações você desempenha o papel de vítima?"] = ""
-        respostas["Em quais situações você desempenha o papel de responsável?"] = st.text_area(
-            "Em quais situações você desempenha o papel de responsável?"
-        )
+        respostas[CAMPOS[6]] = st.text_area(CAMPOS[6])
 
 
-    # -------- SEÇÃO 2 --------
     st.subheader("💔 Relacionamentos")
 
-    respostas["Se considera vitoriosa(o) ou derrotada(o)?"] = st.radio(
-        "Se considera vitoriosa(o) ou derrotada(o)?",
-        ["Vitoriosa(o)", "Derrotada(o)"]
-    )
+    respostas[CAMPOS[7]] = st.radio(CAMPOS[7], ["Vitoriosa(o)", "Derrotada(o)"])
+    respostas[CAMPOS[8]] = st.radio("Nos relacionamentos e na vida, você prefere ser:", ["Dominante", "Submisso"])
+    respostas[CAMPOS[9]] = st.text_area(CAMPOS[9])
 
-    respostas["Perfil nos relacionamentos"] = st.radio(
-        "Nos relacionamentos e na vida, você prefere ser:",
-        ["Dominante", "Submisso"]
-    )
-
-    respostas["Quem é o culpado pelos seus problemas?"] = st.text_area(
-        "Quem deve ser punido por problemas que ocorrem com você?"
-    )
-
-    raiva = st.radio(
-        "Sente raiva ou rancor de alguém?",
-        ["Não", "Sim"]
-    )
-    respostas["Sente raiva ou rancor de alguém?"] = raiva
-
-    if raiva == "Sim":
-        respostas["Raiva direcionada a quem?"] = st.text_input("Quem?")
-    else:
-        respostas["Raiva direcionada a quem?"] = ""
+    raiva = st.radio(CAMPOS[10], ["Não", "Sim"])
+    respostas[CAMPOS[10]] = raiva
+    respostas[CAMPOS[11]] = st.text_input(CAMPOS[11]) if raiva == "Sim" else ""
 
 
-    # -------- SEÇÃO 3 --------
     st.subheader("⚖️ Pressões e Controle")
 
-    pressao = st.radio(
-        "Sente-se pressionada(o) na atualidade?",
-        ["Não", "Sim"]
-    )
-    respostas["Sente-se pressionada(o)?"] = pressao
+    pressao = st.radio(CAMPOS[12], ["Não", "Sim"])
+    respostas[CAMPOS[12]] = pressao
+    respostas[CAMPOS[13]] = st.text_area(CAMPOS[13]) if pressao == "Sim" else ""
 
-    if pressao == "Sim":
-        respostas["De que maneira se sente pressionada(o)?"] = st.text_area("De que maneira?")
-    else:
-        respostas["De que maneira se sente pressionada(o)?"] = ""
+    respostas[CAMPOS[14]] = st.radio(CAMPOS[14], ["Sim", "Não"])
 
-    respostas["Você se acha uma pessoa controladora?"] = st.radio(
-        "Você se acha uma pessoa controladora?",
-        ["Sim", "Não"]
-    )
-
-    inferior = st.radio(
-        "Sente-se inferior aos outros?",
-        ["Não", "Sim"]
-    )
-    respostas["Sente-se inferior aos outros?"] = inferior
-
-    if inferior == "Sim":
-        respostas["Por que se sente inferior?"] = st.text_area("Por quê?")
-    else:
-        respostas["Por que se sente inferior?"] = ""
+    inferior = st.radio(CAMPOS[15], ["Não", "Sim"])
+    respostas[CAMPOS[15]] = inferior
+    respostas[CAMPOS[16]] = st.text_area(CAMPOS[16]) if inferior == "Sim" else ""
 
 
-    # -------- SEÇÃO 4 --------
     st.subheader("💭 Emoções")
 
-    EMOCOES = [
-        "Raiva", "Medo", "Culpa", "Tristeza", "Ansiedade",
-        "Ciúme", "Frustração", "Solidão", "Cansaço"
-    ]
-
-    for emocao in EMOCOES:
+    for emocao in CAMPOS[17:]:
         respostas[emocao] = st.selectbox(
             emocao,
             ["Não sinto", "Pouca intensidade", "Média intensidade", "Muita intensidade"]
@@ -158,16 +123,15 @@ with st.form("formulario_avaliacao"):
 
 
 # ===============================
-# ENVIO PARA GOOGLE SHEETS
+# ENVIO
 # ===============================
 
 if enviar:
 
-    # cria cabeçalho se a planilha estiver vazia
     if not planilha.get_all_values():
-        planilha.append_row(list(respostas.keys()))
+        planilha.append_row(CAMPOS)
 
-    # adiciona respostas
-    planilha.append_row(list(respostas.values()))
+    planilha.append_row([respostas[campo] for campo in CAMPOS])
 
     st.success("Formulário enviado com sucesso!")
+
