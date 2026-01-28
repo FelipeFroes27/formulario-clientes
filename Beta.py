@@ -33,7 +33,7 @@ planilha = client.open(PLANILHA_NOME).sheet1
 
 
 # ===============================
-# CABEÇALHO FIXO (ORDEM GARANTIDA)
+# CABEÇALHO FIXO
 # ===============================
 
 CAMPOS = [
@@ -65,119 +65,101 @@ CAMPOS = [
     "Cansaço"
 ]
 
-
-# ===============================
-# FORMULÁRIO
-# ===============================
-
-respostas = {}
-
-with st.form("formulario_avaliacao"):
-
-    # -------- SEÇÃO 1 --------
-    st.subheader("🧠 Autopercepção")
-
-    respostas[CAMPOS[0]] = st.text_area(CAMPOS[0], key="q1")
-    respostas[CAMPOS[1]] = st.text_area(CAMPOS[1], key="q2")
-    respostas[CAMPOS[2]] = st.text_area(
-        "Se você avaliasse sua atuação na vida, qual papel que mais caberia a você hoje?",
-        key="q3"
-    )
-
-    papel = st.radio(
-        "Você se vê mais como:",
-        ["Vítima", "Responsável"],
-        key="papel"
-    )
-    respostas[CAMPOS[3]] = papel
-
-    respostas[CAMPOS[4]] = ""
-    respostas[CAMPOS[5]] = ""
-    respostas[CAMPOS[6]] = ""
-
-    if papel == "Vítima":
-        respostas[CAMPOS[4]] = st.text_area(CAMPOS[4], key="ganho")
-        respostas[CAMPOS[5]] = st.text_area(CAMPOS[5], key="vitima")
-    else:
-        respostas[CAMPOS[6]] = st.text_area(CAMPOS[6], key="responsavel")
-
-
-    # -------- SEÇÃO 2 --------
-    st.subheader("💔 Relacionamentos")
-
-    respostas[CAMPOS[7]] = st.radio(
-        CAMPOS[7],
-        ["Vitoriosa(o)", "Derrotada(o)"],
-        key="vitoria"
-    )
-
-    respostas[CAMPOS[8]] = st.radio(
-        "Nos relacionamentos e na vida, você prefere ser:",
-        ["Dominante", "Submisso"],
-        key="perfil"
-    )
-
-    respostas[CAMPOS[9]] = st.text_area(CAMPOS[9], key="culpado")
-
-    raiva = st.radio(
-        CAMPOS[10],
-        ["Não", "Sim"],
-        key="raiva"
-    )
-    respostas[CAMPOS[10]] = raiva
-    respostas[CAMPOS[11]] = st.text_input(CAMPOS[11], key="raiva_quem") if raiva == "Sim" else ""
-
-
-    # -------- SEÇÃO 3 --------
-    st.subheader("⚖️ Pressões e Controle")
-
-    pressao = st.radio(
-        CAMPOS[12],
-        ["Não", "Sim"],
-        key="pressao"
-    )
-    respostas[CAMPOS[12]] = pressao
-    respostas[CAMPOS[13]] = st.text_area(CAMPOS[13], key="pressao_txt") if pressao == "Sim" else ""
-
-    respostas[CAMPOS[14]] = st.radio(
-        CAMPOS[14],
-        ["Sim", "Não"],
-        key="controlador"
-    )
-
-    inferior = st.radio(
-        CAMPOS[15],
-        ["Não", "Sim"],
-        key="inferior"
-    )
-    respostas[CAMPOS[15]] = inferior
-    respostas[CAMPOS[16]] = st.text_area(CAMPOS[16], key="inferior_txt") if inferior == "Sim" else ""
-
-
-    # -------- SEÇÃO 4 --------
-    st.subheader("💭 Emoções")
-
-    for idx, emocao in enumerate(CAMPOS[17:], start=1):
-        respostas[emocao] = st.selectbox(
-            emocao,
-            ["Não sinto", "Pouca intensidade", "Média intensidade", "Muita intensidade"],
-            key=f"emo_{idx}"
-        )
-
-    enviar = st.form_submit_button("Enviar formulário")
+respostas = {campo: "" for campo in CAMPOS}
 
 
 # ===============================
-# ENVIO PARA GOOGLE SHEETS
+# FORMULÁRIO (DINÂMICO)
 # ===============================
 
-if enviar:
+st.subheader("🧠 Autopercepção")
 
-    # cria cabeçalho se a primeira linha estiver vazia
+respostas[CAMPOS[0]] = st.text_area(CAMPOS[0])
+respostas[CAMPOS[1]] = st.text_area(CAMPOS[1])
+respostas[CAMPOS[2]] = st.text_area(
+    "Se você avaliasse sua atuação na vida, qual papel que mais caberia a você hoje?"
+)
+
+papel = st.radio("Você se vê mais como:", ["Vítima", "Responsável"])
+respostas[CAMPOS[3]] = papel
+
+if papel == "Vítima":
+    respostas[CAMPOS[4]] = st.text_area(CAMPOS[4])
+    respostas[CAMPOS[5]] = st.text_area(CAMPOS[5])
+else:
+    respostas[CAMPOS[6]] = st.text_area(CAMPOS[6])
+
+
+st.subheader("💔 Relacionamentos")
+
+respostas[CAMPOS[7]] = st.radio(
+    CAMPOS[7],
+    ["Vitoriosa(o)", "Derrotada(o)"]
+)
+
+respostas[CAMPOS[8]] = st.radio(
+    "Nos relacionamentos e na vida, você prefere ser:",
+    ["Dominante", "Submisso"]
+)
+
+respostas[CAMPOS[9]] = st.text_area(CAMPOS[9])
+
+raiva = st.radio(
+    CAMPOS[10],
+    ["Não", "Sim"]
+)
+respostas[CAMPOS[10]] = raiva
+
+if raiva == "Sim":
+    respostas[CAMPOS[11]] = st.text_input(CAMPOS[11])
+
+
+st.subheader("⚖️ Pressões e Controle")
+
+pressao = st.radio(
+    CAMPOS[12],
+    ["Não", "Sim"]
+)
+respostas[CAMPOS[12]] = pressao
+
+if pressao == "Sim":
+    respostas[CAMPOS[13]] = st.text_area(CAMPOS[13])
+
+respostas[CAMPOS[14]] = st.radio(
+    CAMPOS[14],
+    ["Sim", "Não"]
+)
+
+inferior = st.radio(
+    CAMPOS[15],
+    ["Não", "Sim"]
+)
+respostas[CAMPOS[15]] = inferior
+
+if inferior == "Sim":
+    respostas[CAMPOS[16]] = st.text_area(CAMPOS[16])
+
+
+st.subheader("💭 Emoções")
+
+for emocao in CAMPOS[17:]:
+    respostas[emocao] = st.selectbox(
+        emocao,
+        ["Não sinto", "Pouca intensidade", "Média intensidade", "Muita intensidade"]
+    )
+
+
+# ===============================
+# BOTÃO ENVIAR
+# ===============================
+
+if st.button("Enviar formulário"):
+
     if not planilha.row_values(1):
         planilha.append_row(CAMPOS)
 
     planilha.append_row([respostas[campo] for campo in CAMPOS])
 
     st.success("Formulário enviado com sucesso!")
+
 
