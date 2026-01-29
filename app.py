@@ -1,86 +1,109 @@
-# importa a biblioteca principal do Streamlit para criar a interface web
-import streamlit as st
+# ===============================
+# IMPORTAÇÕES
+# ===============================
 
-# importa o gspread para acessar o Google Sheets
-import gspread
+import streamlit as st  # framework principal do app
+import gspread  # biblioteca para Google Sheets
+from google.oauth2.service_account import Credentials  # autenticação Google
 
-# importa as credenciais de conta de serviço do Google
-from google.oauth2.service_account import Credentials
+# ===============================
+# CONFIGURAÇÕES GERAIS
+# ===============================
 
-# escreve um texto fixo na tela para confirmar QUAL arquivo está rodando
-st.write("ARQUIVO BETA.PY EM EXECUÇÃO")
+PLANILHA_NOME = "Banco de dados"  # nome do arquivo no Google Sheets
 
-# define os escopos de acesso ao Google Sheets e Google Drive
-SCOPES = [
+st.set_page_config(page_title="Login", page_icon="🔐")  # configura a página
+st.title("🔐 Login do Sistema")  # título da tela
+
+
+# ===============================
+# CONEXÃO COM GOOGLE SHEETS
+# ===============================
+
+# escopos de acesso ao Google
+scope = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-# cria as credenciais usando o JSON salvo no st.secrets
+# cria credenciais usando secrets do Streamlit
 creds = Credentials.from_service_account_info(
-    st.secrets["google_credentials"],  # pega as credenciais do secrets
-    scopes=SCOPES                       # aplica os escopos definidos acima
+    st.secrets["google_credentials"],
+    scopes=scope
 )
 
-# autoriza o gspread usando as credenciais criadas
+# autoriza o cliente gspread
 client = gspread.authorize(creds)
 
-# abre a planilha pelo NOME (troque pelo nome exato da sua planilha)
-planilha = client.open("Banco de dados")
+# abre a planilha principal
+planilha = client.open(PLANILHA_NOME)
 
-# acessa a aba onde estão os usuários (nome da aba)
+# acessa a aba de usuários
 aba_usuarios = planilha.worksheet("USUARIOS")
 
-# cria um título na interface
-st.title("Login do Sistema")
 
-# cria um campo de texto para o usuário digitar o login
-usuario_digitado = st.text_input("Usuário")
+# ===============================
+# CAMPOS DE LOGIN
+# ===============================
 
-# cria um campo de senha (oculta)
-senha_digitada = st.text_input("Senha", type="password")
+username = st.text_input("Usuário")  # campo usuário
+password = st.text_input("Senha", type="password")  # campo senha
 
-# cria o botão de login
+
+# ===============================
+# BOTÃO DE LOGIN
+# ===============================
+
 if st.button("Entrar"):
-    
-    # confirma visualmente que o botão foi clicado
+
+    # confirma clique no botão
     st.write("BOTÃO FUNCIONOU")
 
-    # escreve um marcador antes de acessar a planilha
+    # mensagem antes de ler a planilha
     st.write("ANTES DE LER A PLANILHA")
 
-    # lê todos os registros da aba usuarios como lista de dicionários
+    # lê todos os usuários da aba
     usuarios = aba_usuarios.get_all_records()
 
-    # escreve um marcador depois da leitura
+    # mensagem depois da leitura
     st.write("DEPOIS DE LER A PLANILHA")
 
-    # mostra na tela exatamente o que veio da planilha
+    # exibe usuários (debug)
     st.write(usuarios)
 
-    # variável para controlar se encontrou o usuário
-    usuario_valido = False
+    # variável de controle de login
+    login_ok = False
 
-    # percorre cada linha (usuário) da planilha
-    for u in usuarios:
-        
-        # verifica se o usuário e senha digitados batem com a planilha
-        if u["usuario"] == usuario_digitado and u["senha"] == senha_digitada:
-            
-            # marca que o usuário é válido
-            usuario_valido = True
+    # percorre cada usuário da planilha
+    for usuario in usuarios:
 
-            # mostra mensagem de sucesso
-            st.success(f"Bem-vindo, {u['usuario']}!")
+        # normaliza usuário da planilha
+        usuario_planilha = str(usuario["usuário"]).strip().lower()
 
-            # mostra o tipo do usuário (cliente ou master)
-            st.write("Tipo de usuário:", u["tipo"])
+        # normaliza senha da planilha
+        senha_planilha = str(usuario["senha"]).strip()
 
-            # interrompe o loop pois já achou o usuário
-            break
+        # normaliza tipo do usuário
+        tipo_usuario = str(usuario["tipo"]).strip().lower()
 
-    # se terminou o loop e não encontrou o usuário
-    if not usuario_valido:
-        
-        # mostra mensagem de erro
+        # normaliza dados digitados
+        usuario_digitado = username.strip().lower()
+        senha_digitada = password.strip()
+
+        # valida usuário e senha
+        if usuario_digitado == usuario_planilha and senha_digitada == senha_planilha:
+            login_ok = True  # login válido
+
+            # salva dados na sessão
+            st.session_state["logado"] = True
+            st.session_state["usuario"] = usuario_planilha
+            st.session_state["tipo"] = tipo_usuario
+
+            break  # sai do loop ao encontrar usuário válido
+
+    # resultado do login
+    if login_ok:
+        st.success("Login realizado com sucesso!")
+        st.write("Tipo de usuário:", st.session_state["tipo"])
+    else:
         st.error("Usuário ou senha inválidos")
