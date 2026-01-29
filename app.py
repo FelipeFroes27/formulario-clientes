@@ -68,6 +68,7 @@ if st.button("Entrar"):
 
     # Busca todos os usuários cadastrados na aba USUARIOS
     usuarios = aba_usuarios.get_all_records()
+    st.write(usuarios)
 
     # Variável para controlar se o login foi encontrado
     usuario_valido = None
