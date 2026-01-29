@@ -1,165 +1,108 @@
+# Importa a biblioteca Streamlit para criar a interface web
 import streamlit as st
+
+# Importa a biblioteca gspread para acessar o Google Sheets
 import gspread
+
+# Importa a classe Credentials para autenticação com o Google
 from google.oauth2.service_account import Credentials
 
 
 # ===============================
-# CONFIGURAÇÕES
+# CONFIGURAÇÕES GERAIS DO SITE
 # ===============================
 
-PLANILHA_NOME = "clientes_formulario"
+# Define o título da aba do navegador e o ícone do site
+st.set_page_config(page_title="Sistema de Consultoria", page_icon="🧠")
 
-st.set_page_config(page_title="Formulário de Avaliação", page_icon="📝")
-st.title("📝 Formulário de Avaliação Pessoal")
-st.write("Responda com sinceridade. Não existem respostas certas ou erradas.")
+# Define o título principal da página
+st.title("🔐 Login do Sistema")
+
+# Texto explicativo para o usuário
+st.write("Digite seu usuário e senha para acessar o sistema.")
 
 
 # ===============================
-# GOOGLE SHEETS
+# CONEXÃO COM O GOOGLE SHEETS
 # ===============================
 
+# Define os escopos de permissão que o app terá no Google
 scope = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
+# Cria as credenciais usando os dados salvos no st.secrets
 creds = Credentials.from_service_account_info(
     st.secrets["google_credentials"],
     scopes=scope
 )
 
+# Autoriza o acesso ao Google Sheets
 client = gspread.authorize(creds)
-planilha = client.open(PLANILHA_NOME).sheet1
+
+# Abre a planilha principal do sistema
+planilha = client.open("clientes_formulario")
+
+# Acessa a aba USUARIOS
+aba_usuarios = planilha.worksheet("USUARIOS")
 
 
 # ===============================
-# CABEÇALHO FIXO
+# CAMPOS DE LOGIN
 # ===============================
 
-CAMPOS = [
-    "O que você pensa a seu respeito?",
-    "Como foi o seu primeiro relacionamento amoroso?",
-    "Qual papel você exerce na vida hoje?",
-    "Vítima ou Responsável?",
-    "Qual o ganho secundário?",
-    "Em quais situações você desempenha o papel de vítima?",
-    "Em quais situações você desempenha o papel de responsável?",
-    "Se considera vitoriosa(o) ou derrotada(o)?",
-    "Perfil nos relacionamentos",
-    "Quem é o culpado pelos seus problemas?",
-    "Sente raiva ou rancor de alguém?",
-    "Raiva direcionada a quem?",
-    "Sente-se pressionada(o)?",
-    "De que maneira se sente pressionada(o)?",
-    "Você se acha uma pessoa controladora?",
-    "Sente-se inferior aos outros?",
-    "Por que se sente inferior?",
-    "Raiva",
-    "Medo",
-    "Culpa",
-    "Tristeza",
-    "Ansiedade",
-    "Ciúme",
-    "Frustração",
-    "Solidão",
-    "Cansaço"
-]
+# Cria um campo de texto para o usuário digitar o login
+usuario_digitado = st.text_input("Usuário")
 
-respostas = {campo: "" for campo in CAMPOS}
+# Cria um campo de senha (oculta os caracteres)
+senha_digitada = st.text_input("Senha", type="password")
 
 
 # ===============================
-# FORMULÁRIO (DINÂMICO)
+# BOTÃO DE LOGIN
 # ===============================
 
-st.subheader("🧠 Autopercepção")
+# Cria um botão para o usuário tentar entrar no sistema
+if st.button("Entrar"):
 
-respostas[CAMPOS[0]] = st.text_area(CAMPOS[0])
-respostas[CAMPOS[1]] = st.text_area(CAMPOS[1])
-respostas[CAMPOS[2]] = st.text_area(
-    "Se você avaliasse sua atuação na vida, qual papel que mais caberia a você hoje?"
-)
+    # Busca todos os usuários cadastrados na aba USUARIOS
+    usuarios = aba_usuarios.get_all_records()
 
-papel = st.radio("Você se vê mais como:", ["Vítima", "Responsável"])
-respostas[CAMPOS[3]] = papel
+    # Variável para controlar se o login foi encontrado
+    usuario_valido = None
 
-if papel == "Vítima":
-    respostas[CAMPOS[4]] = st.text_area(CAMPOS[4])
-    respostas[CAMPOS[5]] = st.text_area(CAMPOS[5])
-else:
-    respostas[CAMPOS[6]] = st.text_area(CAMPOS[6])
+    # Percorre cada usuário cadastrado
+    for u in usuarios:
 
+        # Verifica se o usuário e a senha digitados conferem
+        if u["usuario"] == usuario_digitado and u["senha"] == senha_digitada:
+            usuario_valido = u
+            break
 
-st.subheader("💔 Relacionamentos")
+    # Se encontrou um usuário válido
+    if usuario_valido:
 
-respostas[CAMPOS[7]] = st.radio(
-    CAMPOS[7],
-    ["Vitoriosa(o)", "Derrotada(o)"]
-)
+        # Salva o id do usuário na sessão
+        st.session_state["id_usuario"] = usuario_valido["id_usuario"]
 
-respostas[CAMPOS[8]] = st.radio(
-    "Nos relacionamentos e na vida, você prefere ser:",
-    ["Dominante", "Submisso"]
-)
+        # Salva o tipo de usuário (cliente ou master)
+        st.session_state["tipo"] = usuario_valido["tipo"]
 
-respostas[CAMPOS[9]] = st.text_area(CAMPOS[9])
+        # Salva o nome do usuário
+        st.session_state["usuario"] = usuario_valido["usuario"]
 
-raiva = st.radio(
-    CAMPOS[10],
-    ["Não", "Sim"]
-)
-respostas[CAMPOS[10]] = raiva
+        # Mensagem de sucesso
+        st.success("Login realizado com sucesso!")
 
-if raiva == "Sim":
-    respostas[CAMPOS[11]] = st.text_input(CAMPOS[11])
+        # Se for consultor (master)
+        if usuario_valido["tipo"] == "master":
+            st.switch_page("pages/master_dashboard.py")
 
+        # Se for cliente
+        else:
+            st.switch_page("pages/cliente_dashboard.py")
 
-st.subheader("⚖️ Pressões e Controle")
-
-pressao = st.radio(
-    CAMPOS[12],
-    ["Não", "Sim"]
-)
-respostas[CAMPOS[12]] = pressao
-
-if pressao == "Sim":
-    respostas[CAMPOS[13]] = st.text_area(CAMPOS[13])
-
-respostas[CAMPOS[14]] = st.radio(
-    CAMPOS[14],
-    ["Sim", "Não"]
-)
-
-inferior = st.radio(
-    CAMPOS[15],
-    ["Não", "Sim"]
-)
-respostas[CAMPOS[15]] = inferior
-
-if inferior == "Sim":
-    respostas[CAMPOS[16]] = st.text_area(CAMPOS[16])
-
-
-st.subheader("💭 Emoções")
-
-for emocao in CAMPOS[17:]:
-    respostas[emocao] = st.selectbox(
-        emocao,
-        ["Não sinto", "Pouca intensidade", "Média intensidade", "Muita intensidade"]
-    )
-
-
-# ===============================
-# BOTÃO ENVIAR
-# ===============================
-
-if st.button("Enviar formulário"):
-
-    if not planilha.row_values(1):
-        planilha.append_row(CAMPOS)
-
-    planilha.append_row([respostas[campo] for campo in CAMPOS])
-
-    st.success("Formulário enviado com sucesso!")
-
-
+    # Caso usuário ou senha estejam incorretos
+    else:
+        st.error("Usuário ou senha inválidos.")
