@@ -150,7 +150,7 @@ if inferior == "Sim":
 
 st.subheader("💭 Emoções")
 
-for emocao in CAMPOS[17:25]:
+for emocao in CAMPOS[17:26]:
     respostas[emocao] = st.selectbox(
         emocao,
         ["Não sinto", "Pouca intensidade", "Média intensidade", "Muita intensidade"]
