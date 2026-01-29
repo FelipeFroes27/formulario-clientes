@@ -1,109 +1,86 @@
-# Importa a biblioteca Streamlit para criar a interface web
+# importa a biblioteca principal do Streamlit para criar a interface web
 import streamlit as st
 
-# Importa a biblioteca gspread para acessar o Google Sheets
+# importa o gspread para acessar o Google Sheets
 import gspread
 
-# Importa a classe Credentials para autenticação com o Google
+# importa as credenciais de conta de serviço do Google
 from google.oauth2.service_account import Credentials
 
+# escreve um texto fixo na tela para confirmar QUAL arquivo está rodando
+st.write("ARQUIVO BETA.PY EM EXECUÇÃO")
 
-# ===============================
-# CONFIGURAÇÕES GERAIS DO SITE
-# ===============================
-
-# Define o título da aba do navegador e o ícone do site
-st.set_page_config(page_title="Sistema de Consultoria", page_icon="🧠")
-
-# Define o título principal da página
-st.title("🔐 Login do Sistema")
-
-# Texto explicativo para o usuário
-st.write("Digite seu usuário e senha para acessar o sistema.")
-
-
-# ===============================
-# CONEXÃO COM O GOOGLE SHEETS
-# ===============================
-
-# Define os escopos de permissão que o app terá no Google
-scope = [
+# define os escopos de acesso ao Google Sheets e Google Drive
+SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-# Cria as credenciais usando os dados salvos no st.secrets
+# cria as credenciais usando o JSON salvo no st.secrets
 creds = Credentials.from_service_account_info(
-    st.secrets["google_credentials"],
-    scopes=scope
+    st.secrets["google_credentials"],  # pega as credenciais do secrets
+    scopes=SCOPES                       # aplica os escopos definidos acima
 )
 
-# Autoriza o acesso ao Google Sheets
+# autoriza o gspread usando as credenciais criadas
 client = gspread.authorize(creds)
 
-# Abre a planilha principal do sistema
-planilha = client.open("clientes_formulario")
+# abre a planilha pelo NOME (troque pelo nome exato da sua planilha)
+planilha = client.open("NOME_DA_SUA_PLANILHA_AQUI")
 
-# Acessa a aba USUARIOS
-aba_usuarios = planilha.worksheet("USUARIOS")
+# acessa a aba onde estão os usuários (nome da aba)
+aba_usuarios = planilha.worksheet("usuarios")
 
+# cria um título na interface
+st.title("Login do Sistema")
 
-# ===============================
-# CAMPOS DE LOGIN
-# ===============================
-
-# Cria um campo de texto para o usuário digitar o login
+# cria um campo de texto para o usuário digitar o login
 usuario_digitado = st.text_input("Usuário")
 
-# Cria um campo de senha (oculta os caracteres)
+# cria um campo de senha (oculta)
 senha_digitada = st.text_input("Senha", type="password")
 
-
-# ===============================
-# BOTÃO DE LOGIN
-# ===============================
-
-# Cria um botão para o usuário tentar entrar no sistema
+# cria o botão de login
 if st.button("Entrar"):
+    
+    # confirma visualmente que o botão foi clicado
+    st.write("BOTÃO FUNCIONOU")
 
-    # Busca todos os usuários cadastrados na aba USUARIOS
+    # escreve um marcador antes de acessar a planilha
+    st.write("ANTES DE LER A PLANILHA")
+
+    # lê todos os registros da aba usuarios como lista de dicionários
     usuarios = aba_usuarios.get_all_records()
+
+    # escreve um marcador depois da leitura
+    st.write("DEPOIS DE LER A PLANILHA")
+
+    # mostra na tela exatamente o que veio da planilha
     st.write(usuarios)
 
-    # Variável para controlar se o login foi encontrado
-    usuario_valido = None
+    # variável para controlar se encontrou o usuário
+    usuario_valido = False
 
-    # Percorre cada usuário cadastrado
+    # percorre cada linha (usuário) da planilha
     for u in usuarios:
-
-        # Verifica se o usuário e a senha digitados conferem
+        
+        # verifica se o usuário e senha digitados batem com a planilha
         if u["usuario"] == usuario_digitado and u["senha"] == senha_digitada:
-            usuario_valido = u
+            
+            # marca que o usuário é válido
+            usuario_valido = True
+
+            # mostra mensagem de sucesso
+            st.success(f"Bem-vindo, {u['usuario']}!")
+
+            # mostra o tipo do usuário (cliente ou master)
+            st.write("Tipo de usuário:", u["tipo"])
+
+            # interrompe o loop pois já achou o usuário
             break
 
-    # Se encontrou um usuário válido
-    if usuario_valido:
-
-        # Salva o id do usuário na sessão
-        st.session_state["id_usuario"] = usuario_valido["id_usuario"]
-
-        # Salva o tipo de usuário (cliente ou master)
-        st.session_state["tipo"] = usuario_valido["tipo"]
-
-        # Salva o nome do usuário
-        st.session_state["usuario"] = usuario_valido["usuario"]
-
-        # Mensagem de sucesso
-        st.success("Login realizado com sucesso!")
-
-        # Se for consultor (master)
-        if usuario_valido["tipo"] == "master":
-            st.switch_page("pages/master_dashboard.py")
-
-        # Se for cliente
-        else:
-            st.switch_page("pages/cliente_dashboard.py")
-
-    # Caso usuário ou senha estejam incorretos
-    else:
-        st.error("Usuário ou senha inválidos.")
+    # se terminou o loop e não encontrou o usuário
+    if not usuario_valido:
+        
+        # mostra mensagem de erro
+        st.error("Usuário ou senha inválidos")
