@@ -62,11 +62,7 @@ CAMPOS = [
     "Ciúme",
     "Frustração",
     "Solidão",
-    "Cansaço",
-    "Nome:",
-    "CPF",
-    "RG",
-    "Data de Nascimento"
+    "Cansaço"
 ]
 
 respostas = {campo: "" for campo in CAMPOS}
@@ -150,7 +146,7 @@ if inferior == "Sim":
 
 st.subheader("💭 Emoções")
 
-for emocao in CAMPOS[17:26]:
+for emocao in CAMPOS[17:]:
     respostas[emocao] = st.selectbox(
         emocao,
         ["Não sinto", "Pouca intensidade", "Média intensidade", "Muita intensidade"]
