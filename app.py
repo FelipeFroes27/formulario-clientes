@@ -26,7 +26,7 @@ creds = Credentials.from_service_account_info(
 client = gspread.authorize(creds)
 
 # abre a planilha pelo NOME (troque pelo nome exato da sua planilha)
-planilha = client.open("NOME_DA_SUA_PLANILHA_AQUI")
+planilha = client.open("Banco de dados")
 
 # acessa a aba onde estão os usuários (nome da aba)
 aba_usuarios = planilha.worksheet("usuarios")
