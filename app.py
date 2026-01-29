@@ -29,7 +29,7 @@ client = gspread.authorize(creds)
 planilha = client.open("Banco de dados")
 
 # acessa a aba onde estão os usuários (nome da aba)
-aba_usuarios = planilha.worksheet("usuarios")
+aba_usuarios = planilha.worksheet("USUARIOS")
 
 # cria um título na interface
 st.title("Login do Sistema")
