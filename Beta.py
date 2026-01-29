@@ -62,7 +62,11 @@ CAMPOS = [
     "Ciúme",
     "Frustração",
     "Solidão",
-    "Cansaço"
+    "Cansaço",
+    "Nome:",
+    "CPF",
+    "RG",
+    "Data de Nascimento"
 ]
 
 respostas = {campo: "" for campo in CAMPOS}
@@ -71,6 +75,10 @@ respostas = {campo: "" for campo in CAMPOS}
 # ===============================
 # FORMULÁRIO (DINÂMICO)
 # ===============================
+
+st.subheader("🚹 Dados Pessoais")
+
+respostas[CAMPOS[26]] = st.text_input(CAMPOS[26])
 
 st.subheader("🧠 Autopercepção")
 
