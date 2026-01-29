@@ -72,10 +72,6 @@ respostas = {campo: "" for campo in CAMPOS}
 # FORMULÁRIO (DINÂMICO)
 # ===============================
 
-st.subheader("🚹 Dados Pessoais")
-
-respostas[CAMPOS[26]] = st.text_input(CAMPOS[26])
-
 st.subheader("🧠 Autopercepção")
 
 respostas[CAMPOS[0]] = st.text_area(CAMPOS[0])
