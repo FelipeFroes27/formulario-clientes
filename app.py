@@ -56,20 +56,8 @@ password = st.text_input("Senha", type="password")  # campo senha
 
 if st.button("Entrar"):
 
-    # confirma clique no botão
-    st.write("BOTÃO FUNCIONOU")
-
-    # mensagem antes de ler a planilha
-    st.write("ANTES DE LER A PLANILHA")
-
     # lê todos os usuários da aba
     usuarios = aba_usuarios.get_all_records()
-
-    # mensagem depois da leitura
-    st.write("DEPOIS DE LER A PLANILHA")
-
-    # exibe usuários (debug)
-    st.write(usuarios)
 
     # variável de controle de login
     login_ok = False
