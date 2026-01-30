@@ -43,12 +43,11 @@ aba_acessos = planilha.worksheet("ACESSOS")
 
 
 # ===============================
-# CAMPOS DO FORMULÁRIO 1
+# CAMPOS FORMULÁRIO 1
 # ===============================
 
 CAMPOS_F1 = [
-    "Cliente",
-    "Data",
+    "Cliente", "Data",
     "O que você pensa a seu respeito?",
     "Como foi o seu primeiro relacionamento amoroso?",
     "Qual papel você exerce na vida hoje?",
@@ -66,15 +65,9 @@ CAMPOS_F1 = [
     "Você se acha uma pessoa controladora?",
     "Sente-se inferior aos outros?",
     "Por que se sente inferior?",
-    "Raiva",
-    "Medo",
-    "Culpa",
-    "Tristeza",
-    "Ansiedade",
-    "Ciúme",
-    "Frustração",
-    "Solidão",
-    "Cansaço"
+    "Raiva", "Medo", "Culpa", "Tristeza",
+    "Ansiedade", "Ciúme", "Frustração",
+    "Solidão", "Cansaço"
 ]
 
 
@@ -91,7 +84,7 @@ def buscar_resposta(aba, usuario):
 
 
 # ===============================
-# TELA DE LOGIN
+# LOGIN
 # ===============================
 
 def tela_login():
@@ -102,18 +95,17 @@ def tela_login():
     senha = st.text_input("Senha", type="password")
 
     if st.button("Entrar"):
-
-        usuarios = aba_usuarios.get_all_records()
-
-        for u in usuarios:
+        for u in aba_usuarios.get_all_records():
             if (
-                usuario.strip().lower() == str(u["usuario"]).strip().lower()
-                and senha.strip() == str(u["senha"]).strip()
+                usuario.strip().lower() == str(u.get("usuario", "")).strip().lower()
+                and senha.strip() == str(u.get("senha", "")).strip()
             ):
-                st.session_state["logado"] = True
-                st.session_state["usuario"] = usuario.strip().lower()
-                st.session_state["tipo"] = str(u["tipo"]).strip().lower()
-                st.session_state["pagina"] = "home"
+                st.session_state.update({
+                    "logado": True,
+                    "usuario": usuario.strip().lower(),
+                    "tipo": str(u.get("tipo", "")).strip().lower(),
+                    "pagina": "home"
+                })
                 return
 
         st.error("Usuário ou senha inválidos")
@@ -131,20 +123,27 @@ def tela_cliente():
     acessos = aba_acessos.get_all_records()
     formularios = aba_formularios.get_all_records()
 
+    ids_liberados = [
+        a.get("formulario_id")
+        for a in acessos
+        if a.get("usuario", "").strip().lower() == st.session_state["usuario"]
+    ]
+
     liberados = [
         f for f in formularios
-        if f["id"] in [
-            a["formulario_id"] for a in acessos
-            if a["usuario"].strip().lower() == st.session_state["usuario"]
-        ]
-        and f["ativo"].strip().lower() == "sim"
+        if f.get("id") in ids_liberados
+        and f.get("ativo", "").strip().lower() == "sim"
     ]
 
     st.subheader("📝 Formulários disponíveis")
 
+    if not liberados:
+        st.info("Nenhum formulário liberado para você.")
+        return
+
     for f in liberados:
-        if st.button(f["nome"]):
-            st.session_state["formulario_atual"] = f["id"]
+        if st.button(f.get("nome", "Formulário")):
+            st.session_state["formulario_atual"] = f.get("id")
             st.session_state["pagina"] = "formulario"
 
 
@@ -159,71 +158,37 @@ def tela_formulario_f1():
     st.title("📝 Avaliação Pessoal")
 
     usuario = st.session_state["usuario"]
-
     linha, dados = buscar_resposta(aba, usuario)
 
     respostas = {campo: "" for campo in CAMPOS_F1}
-
     if dados:
-        for campo in CAMPOS_F1:
-            respostas[campo] = dados.get(campo, "")
+        respostas.update(dados)
 
     respostas["Cliente"] = usuario
     respostas["Data"] = datetime.now().strftime("%d/%m/%Y")
 
-    respostas[CAMPOS_F1[2]] = st.text_area(CAMPOS_F1[2], respostas[CAMPOS_F1[2]])
-    respostas[CAMPOS_F1[3]] = st.text_area(CAMPOS_F1[3], respostas[CAMPOS_F1[3]])
-    respostas[CAMPOS_F1[4]] = st.text_area(CAMPOS_F1[4], respostas[CAMPOS_F1[4]])
-
-    papel = st.radio(
-        CAMPOS_F1[5],
-        ["Vítima", "Responsável"],
-        index=0 if respostas[CAMPOS_F1[5]] == "Vítima" else 1
-    )
-    respostas[CAMPOS_F1[5]] = papel
-
-    if papel == "Vítima":
-        respostas[CAMPOS_F1[6]] = st.text_area(CAMPOS_F1[6], respostas[CAMPOS_F1[6]])
-        respostas[CAMPOS_F1[7]] = st.text_area(CAMPOS_F1[7], respostas[CAMPOS_F1[7]])
-    else:
-        respostas[CAMPOS_F1[8]] = st.text_area(CAMPOS_F1[8], respostas[CAMPOS_F1[8]])
-
-    for emocao in CAMPOS_F1[19:]:
-        respostas[emocao] = st.selectbox(
-            emocao,
-            ["Não sinto", "Pouca intensidade", "Média intensidade", "Muita intensidade"],
-            index=["Não sinto", "Pouca intensidade", "Média intensidade", "Muita intensidade"]
-            .index(respostas.get(emocao, "Não sinto"))
-        )
+    for campo in CAMPOS_F1[2:]:
+        respostas[campo] = st.text_area(campo, respostas.get(campo, ""))
 
     if st.button("Salvar formulário"):
 
         if not aba.row_values(1):
             aba.append_row(CAMPOS_F1)
 
-        valores = [respostas[campo] for campo in CAMPOS_F1]
+        valores = [respostas[c] for c in CAMPOS_F1]
 
         if linha:
             aba.update(f"A{linha}:AB{linha}", [valores])
-            st.success("Respostas atualizadas com sucesso!")
+            st.success("Formulário atualizado!")
         else:
             aba.append_row(valores)
-            st.success("Formulário enviado com sucesso!")
+            st.success("Formulário enviado!")
 
         st.session_state["pagina"] = "home"
 
 
 # ===============================
-# PAINEL DO CONSULTOR
-# ===============================
-
-def tela_mestre():
-    st.title("🧠 Painel do Consultor")
-    st.write("Em breve: gestão de clientes e formulários")
-
-
-# ===============================
-# CONTROLE DE NAVEGAÇÃO
+# NAVEGAÇÃO
 # ===============================
 
 if "logado" not in st.session_state:
@@ -237,14 +202,8 @@ if not st.session_state["logado"]:
 
 else:
     if st.session_state["tipo"] == "cliente":
-
         if st.session_state["pagina"] == "home":
             tela_cliente()
-
         elif st.session_state["pagina"] == "formulario":
             if st.session_state.get("formulario_atual") == "F1":
                 tela_formulario_f1()
-
-    elif st.session_state["tipo"] == "mestre":
-        tela_mestre()
-
