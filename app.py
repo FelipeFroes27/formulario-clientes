@@ -38,7 +38,7 @@ client = gspread.authorize(creds)
 planilha = client.open(PLANILHA_NOME)
 
 aba_usuarios = planilha.worksheet("USUARIOS")
-aba_formularios = planilha.worksheet("FORMULARIOS")
+aba_formularios = planilha.worksheet("FORMULÁRIOS")
 aba_acessos = planilha.worksheet("ACESSOS")
 
 
