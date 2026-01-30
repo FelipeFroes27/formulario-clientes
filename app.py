@@ -5,6 +5,7 @@
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
+from datetime import datetime
 
 
 # ===============================
@@ -13,7 +14,10 @@ from google.oauth2.service_account import Credentials
 
 PLANILHA_NOME = "Banco de dados"
 
-st.set_page_config(page_title="Sistema de Consultoria", page_icon="🧠")
+st.set_page_config(
+    page_title="Sistema de Consultoria",
+    page_icon="🧠"
+)
 
 
 # ===============================
@@ -44,6 +48,7 @@ aba_formulario = planilha.worksheet("FORMULÁRIO 1")
 
 CAMPOS = [
     "Cliente",
+    "Data",
     "O que você pensa a seu respeito?",
     "Como foi o seu primeiro relacionamento amoroso?",
     "Qual papel você exerce na vida hoje?",
@@ -74,7 +79,7 @@ CAMPOS = [
 
 
 # ===============================
-# TELA DE LOGIN (SEU CÓDIGO)
+# TELA DE LOGIN
 # ===============================
 
 def tela_login():
@@ -94,8 +99,10 @@ def tela_login():
             senha_planilha = str(usuario["senha"]).strip()
             tipo_usuario = str(usuario["tipo"]).strip().lower()
 
-            if username.strip().lower() == usuario_planilha and password.strip() == senha_planilha:
-
+            if (
+                username.strip().lower() == usuario_planilha
+                and password.strip() == senha_planilha
+            ):
                 st.session_state["logado"] = True
                 st.session_state["usuario"] = usuario_planilha
                 st.session_state["tipo"] = tipo_usuario
@@ -112,7 +119,7 @@ def tela_login():
 def tela_cliente():
 
     st.title("👤 Área do Cliente")
-    st.write(f"Bem-vindo, {st.session_state['usuario']}")
+    st.write(f"Bem-vindo, **{st.session_state['usuario']}**")
 
     if st.button("📝 Formulário de Avaliação Pessoal"):
         st.session_state["pagina"] = "formulario"
@@ -128,49 +135,65 @@ def tela_formulario():
     st.write("Responda com sinceridade. Não existem respostas certas ou erradas.")
 
     respostas = {campo: "" for campo in CAMPOS}
-    respostas["Cliente"] = st.session_state["usuario"]
 
-    respostas[CAMPOS[1]] = st.text_area(CAMPOS[1])
+    respostas["Cliente"] = st.session_state["usuario"]
+    respostas["Data"] = datetime.now().strftime("%d/%m/%Y")
+
     respostas[CAMPOS[2]] = st.text_area(CAMPOS[2])
-    respostas[CAMPOS[3]] = st.text_area("Se você avaliasse sua atuação na vida, qual papel caberia a você hoje?")
+    respostas[CAMPOS[3]] = st.text_area(CAMPOS[3])
+    respostas[CAMPOS[4]] = st.text_area(
+        "Se você avaliasse sua atuação na vida, qual papel caberia a você hoje?"
+    )
 
     papel = st.radio("Você se vê mais como:", ["Vítima", "Responsável"])
-    respostas[CAMPOS[4]] = papel
+    respostas[CAMPOS[5]] = papel
 
     if papel == "Vítima":
-        respostas[CAMPOS[5]] = st.text_area(CAMPOS[5])
         respostas[CAMPOS[6]] = st.text_area(CAMPOS[6])
-    else:
         respostas[CAMPOS[7]] = st.text_area(CAMPOS[7])
+    else:
+        respostas[CAMPOS[8]] = st.text_area(CAMPOS[8])
 
-    respostas[CAMPOS[8]] = st.radio(CAMPOS[8], ["Vitoriosa(o)", "Derrotada(o)"])
-    respostas[CAMPOS[9]] = st.radio("Nos relacionamentos você tende a ser:", ["Dominante", "Submisso"])
-    respostas[CAMPOS[10]] = st.text_area(CAMPOS[10])
+    respostas[CAMPOS[9]] = st.radio(
+        CAMPOS[9], ["Vitoriosa(o)", "Derrotada(o)"]
+    )
 
-    raiva = st.radio(CAMPOS[11], ["Não", "Sim"])
-    respostas[CAMPOS[11]] = raiva
+    respostas[CAMPOS[10]] = st.radio(
+        "Nos relacionamentos você tende a ser:",
+        ["Dominante", "Submisso"]
+    )
+
+    respostas[CAMPOS[11]] = st.text_area(CAMPOS[11])
+
+    raiva = st.radio(CAMPOS[12], ["Não", "Sim"])
+    respostas[CAMPOS[12]] = raiva
 
     if raiva == "Sim":
-        respostas[CAMPOS[12]] = st.text_input(CAMPOS[12])
+        respostas[CAMPOS[13]] = st.text_input(CAMPOS[13])
 
-    pressao = st.radio(CAMPOS[13], ["Não", "Sim"])
-    respostas[CAMPOS[13]] = pressao
+    pressao = st.radio(CAMPOS[14], ["Não", "Sim"])
+    respostas[CAMPOS[14]] = pressao
 
     if pressao == "Sim":
-        respostas[CAMPOS[14]] = st.text_area(CAMPOS[14])
+        respostas[CAMPOS[15]] = st.text_area(CAMPOS[15])
 
-    respostas[CAMPOS[15]] = st.radio(CAMPOS[15], ["Sim", "Não"])
+    respostas[CAMPOS[16]] = st.radio(CAMPOS[16], ["Sim", "Não"])
 
-    inferior = st.radio(CAMPOS[16], ["Não", "Sim"])
-    respostas[CAMPOS[16]] = inferior
+    inferior = st.radio(CAMPOS[17], ["Não", "Sim"])
+    respostas[CAMPOS[17]] = inferior
 
     if inferior == "Sim":
-        respostas[CAMPOS[17]] = st.text_area(CAMPOS[17])
+        respostas[CAMPOS[18]] = st.text_area(CAMPOS[18])
 
-    for emocao in CAMPOS[18:]:
+    for emocao in CAMPOS[19:]:
         respostas[emocao] = st.selectbox(
             emocao,
-            ["Não sinto", "Pouca intensidade", "Média intensidade", "Muita intensidade"]
+            [
+                "Não sinto",
+                "Pouca intensidade",
+                "Média intensidade",
+                "Muita intensidade"
+            ]
         )
 
     if st.button("Enviar formulário"):
