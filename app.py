@@ -66,7 +66,7 @@ if st.button("Entrar"):
     for usuario in usuarios:
 
         # normaliza usuário da planilha
-        usuario_planilha = str(usuario["usuário"]).strip().lower()
+        usuario_planilha = str(usuario["usuario"]).strip().lower()
 
         # normaliza senha da planilha
         senha_planilha = str(usuario["senha"]).strip()
