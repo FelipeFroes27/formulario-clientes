@@ -1,197 +1,250 @@
+# ===============================
+# IMPORTAÇÕES
+# ===============================
+
 import streamlit as st
 import gspread
+from google.oauth2.service_account import Credentials
 from datetime import datetime
 
-# =============================
-# CONFIGURAÇÃO GOOGLE SHEETS
-# =============================
-gc = gspread.service_account_from_dict(
-    st.secrets["google_credentials"]
+
+# ===============================
+# CONFIGURAÇÕES GERAIS
+# ===============================
+
+PLANILHA_NOME = "Banco de dados"
+
+st.set_page_config(
+    page_title="Sistema de Consultoria",
+    page_icon="🧠"
 )
 
-PLANILHA = gc.open("Banco de dados")
 
-ABA_USUARIOS = "USUARIOS"
-ABA_FORM_1 = "FORMULÁRIO 1"
+# ===============================
+# CONEXÃO COM GOOGLE SHEETS
+# ===============================
 
-# =============================
-# SESSION STATE (OBRIGATÓRIO)
-# =============================
+scope = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
+
+creds = Credentials.from_service_account_info(
+    st.secrets["google_credentials"],
+    scopes=scope
+)
+
+client = gspread.authorize(creds)
+planilha = client.open(PLANILHA_NOME)
+
+aba_usuarios = planilha.worksheet("USUARIOS")
+aba_formularios = planilha.worksheet("FORMULÁRIOS")
+aba_acessos = planilha.worksheet("ACESSOS")
+
+
+# ===============================
+# CAMPOS DO FORMULÁRIO 1
+# ===============================
+
+CAMPOS_F1 = [
+    "Cliente",
+    "Data",
+    "O que você pensa a seu respeito?",
+    "Como foi o seu primeiro relacionamento amoroso?",
+    "Qual papel você exerce na vida hoje?",
+    "Vítima ou Responsável?",
+    "Qual o ganho secundário?",
+    "Em quais situações você desempenha o papel de vítima?",
+    "Em quais situações você desempenha o papel de responsável?",
+    "Se considera vitoriosa(o) ou derrotada(o)?",
+    "Perfil nos relacionamentos",
+    "Quem é o culpado pelos seus problemas?",
+    "Sente raiva ou rancor de alguém?",
+    "Raiva direcionada a quem?",
+    "Sente-se pressionada(o)?",
+    "De que maneira se sente pressionada(o)?",
+    "Você se acha uma pessoa controladora?",
+    "Sente-se inferior aos outros?",
+    "Por que se sente inferior?",
+    "Raiva",
+    "Medo",
+    "Culpa",
+    "Tristeza",
+    "Ansiedade",
+    "Ciúme",
+    "Frustração",
+    "Solidão",
+    "Cansaço"
+]
+
+
+# ===============================
+# FUNÇÃO AUXILIAR
+# ===============================
+
+def buscar_resposta(aba, usuario):
+    registros = aba.get_all_records()
+    for i, linha in enumerate(registros, start=2):
+        if linha.get("Cliente", "").strip().lower() == usuario:
+            return i, linha
+    return None, None
+
+
+# ===============================
+# TELA DE LOGIN
+# ===============================
+
+def tela_login():
+
+    st.title("🔐 Login")
+
+    usuario = st.text_input("Usuário")
+    senha = st.text_input("Senha", type="password")
+
+    if st.button("Entrar"):
+
+        usuarios = aba_usuarios.get_all_records()
+
+        for u in usuarios:
+            if (
+                usuario.strip().lower() == str(u["usuario"]).strip().lower()
+                and senha.strip() == str(u["senha"]).strip()
+            ):
+                st.session_state["logado"] = True
+                st.session_state["usuario"] = usuario.strip().lower()
+                st.session_state["tipo"] = str(u["tipo"]).strip().lower()
+                st.session_state["pagina"] = "home"
+                return
+
+        st.error("Usuário ou senha inválidos")
+
+
+# ===============================
+# ÁREA DO CLIENTE
+# ===============================
+
+def tela_cliente():
+
+    st.title("👤 Área do Cliente")
+    st.write(f"Bem-vindo, **{st.session_state['usuario']}**")
+
+    acessos = aba_acessos.get_all_records()
+    formularios = aba_formularios.get_all_records()
+
+    liberados = [
+        f for f in formularios
+        if f["id"] in [
+            a["formulario_id"] for a in acessos
+            if a["usuario"].strip().lower() == st.session_state["usuario"]
+        ]
+        and f["ativo"].strip().lower() == "sim"
+    ]
+
+    st.subheader("📝 Formulários disponíveis")
+
+    for f in liberados:
+        if st.button(f["nome"]):
+            st.session_state["formulario_atual"] = f["id"]
+            st.session_state["pagina"] = "formulario"
+
+
+# ===============================
+# FORMULÁRIO 1
+# ===============================
+
+def tela_formulario_f1():
+
+    aba = planilha.worksheet("FORMULÁRIO 1")
+
+    st.title("📝 Avaliação Pessoal")
+
+    usuario = st.session_state["usuario"]
+
+    linha, dados = buscar_resposta(aba, usuario)
+
+    respostas = {campo: "" for campo in CAMPOS_F1}
+
+    if dados:
+        for campo in CAMPOS_F1:
+            respostas[campo] = dados.get(campo, "")
+
+    respostas["Cliente"] = usuario
+    respostas["Data"] = datetime.now().strftime("%d/%m/%Y")
+
+    respostas[CAMPOS_F1[2]] = st.text_area(CAMPOS_F1[2], respostas[CAMPOS_F1[2]])
+    respostas[CAMPOS_F1[3]] = st.text_area(CAMPOS_F1[3], respostas[CAMPOS_F1[3]])
+    respostas[CAMPOS_F1[4]] = st.text_area(CAMPOS_F1[4], respostas[CAMPOS_F1[4]])
+
+    papel = st.radio(
+        CAMPOS_F1[5],
+        ["Vítima", "Responsável"],
+        index=0 if respostas[CAMPOS_F1[5]] == "Vítima" else 1
+    )
+    respostas[CAMPOS_F1[5]] = papel
+
+    if papel == "Vítima":
+        respostas[CAMPOS_F1[6]] = st.text_area(CAMPOS_F1[6], respostas[CAMPOS_F1[6]])
+        respostas[CAMPOS_F1[7]] = st.text_area(CAMPOS_F1[7], respostas[CAMPOS_F1[7]])
+    else:
+        respostas[CAMPOS_F1[8]] = st.text_area(CAMPOS_F1[8], respostas[CAMPOS_F1[8]])
+
+    for emocao in CAMPOS_F1[19:]:
+        respostas[emocao] = st.selectbox(
+            emocao,
+            ["Não sinto", "Pouca intensidade", "Média intensidade", "Muita intensidade"],
+            index=["Não sinto", "Pouca intensidade", "Média intensidade", "Muita intensidade"]
+            .index(respostas.get(emocao, "Não sinto"))
+        )
+
+    if st.button("Salvar formulário"):
+
+        if not aba.row_values(1):
+            aba.append_row(CAMPOS_F1)
+
+        valores = [respostas[campo] for campo in CAMPOS_F1]
+
+        if linha:
+            aba.update(f"A{linha}:AB{linha}", [valores])
+            st.success("Respostas atualizadas com sucesso!")
+        else:
+            aba.append_row(valores)
+            st.success("Formulário enviado com sucesso!")
+
+        st.session_state["pagina"] = "home"
+
+
+# ===============================
+# PAINEL DO CONSULTOR
+# ===============================
+
+def tela_mestre():
+    st.title("🧠 Painel do Consultor")
+    st.write("Em breve: gestão de clientes e formulários")
+
+
+# ===============================
+# CONTROLE DE NAVEGAÇÃO
+# ===============================
+
 if "logado" not in st.session_state:
     st.session_state["logado"] = False
 
 if "pagina" not in st.session_state:
     st.session_state["pagina"] = "login"
 
-if "usuario" not in st.session_state:
-    st.session_state["usuario"] = None
-
-if "tipo_usuario" not in st.session_state:
-    st.session_state["tipo_usuario"] = None
-
-if "formulario_atual" not in st.session_state:
-    st.session_state["formulario_atual"] = None
-
-# =============================
-# FUNÇÕES AUXILIARES
-# =============================
-def get_data_hoje():
-    return datetime.now().strftime("%d/%m/%Y")
-
-
-def ler_usuarios():
-    aba = PLANILHA.worksheet(ABA_USUARIOS)
-    dados = aba.get_all_records()
-    return dados
-
-
-def autenticar(login, senha):
-    usuarios = ler_usuarios()
-    for u in usuarios:
-        if u["login"].strip().lower() == login.strip().lower() and str(u["senha"]) == str(senha):
-            return u
-    return None
-
-
-def verificar_resposta_existente(cliente):
-    aba = PLANILHA.worksheet(ABA_FORM_1)
-    dados = aba.get_all_records()
-    for linha in dados:
-        if linha.get("Cliente") == cliente:
-            return linha
-    return None
-
-
-def salvar_resposta_form1(resposta, editar=False):
-    aba = PLANILHA.worksheet(ABA_FORM_1)
-
-    CAMPOS = list(resposta.keys())
-
-    if aba.row_count == 0 or aba.row_values(1) == []:
-        aba.append_row(CAMPOS)
-
-    dados = aba.get_all_records()
-
-    if editar:
-        for i, linha in enumerate(dados, start=2):
-            if linha["Cliente"] == resposta["Cliente"]:
-                aba.update(f"A{i}:{chr(64+len(CAMPOS))}{i}", [list(resposta.values())])
-                return
-    else:
-        aba.append_row(list(resposta.values()))
-
-
-# =============================
-# TELAS
-# =============================
-def tela_login():
-    st.title("Login")
-
-    login = st.text_input("Login")
-    senha = st.text_input("Senha", type="password")
-
-    if st.button("Entrar"):
-        user = autenticar(login, senha)
-        if user:
-            st.session_state["logado"] = True
-            st.session_state["usuario"] = user["login"]
-            st.session_state["tipo_usuario"] = user["tipo"]
-            st.session_state["pagina"] = "home"
-            st.rerun()
-        else:
-            st.error("Login ou senha inválidos")
-
-
-def tela_home():
-    st.title("Painel")
-
-    st.write(f"Usuário: **{st.session_state['usuario']}**")
-
-    if st.session_state["tipo_usuario"] == "cliente":
-        if st.button("Formulário 1"):
-            st.session_state["formulario_atual"] = "F1"
-            st.session_state["pagina"] = "formulario"
-            st.rerun()
-
-    if st.button("Sair"):
-        for k in list(st.session_state.keys()):
-            del st.session_state[k]
-        st.rerun()
-
-
-def tela_formulario_f1():
-    st.title("FORMULÁRIO 1")
-
-    cliente = st.session_state["usuario"]
-    resposta_existente = verificar_resposta_existente(cliente)
-
-    editar = False
-    if resposta_existente:
-        st.warning("Você já respondeu este formulário.")
-        editar = st.button("Editar respostas")
-
-    if resposta_existente and not editar:
-        st.info("Clique em **Editar respostas** para alterar.")
-        return
-
-    # =============================
-    # CAMPOS DO FORMULÁRIO
-    # =============================
-    st.subheader("Dados Gerais")
-
-    idade = st.number_input(
-        "Idade",
-        min_value=0,
-        value=resposta_existente["Idade"] if resposta_existente else 0
-    )
-
-    humor = st.selectbox(
-        "Como está se sentindo hoje?",
-        ["", "Bem", "Normal", "Mal"],
-        index=0 if not resposta_existente else ["", "Bem", "Normal", "Mal"].index(resposta_existente["Humor"])
-    )
-
-    raiva = st.radio(
-        "Sente raiva de alguém?",
-        ["Não", "Sim"],
-        index=0 if not resposta_existente else ["Não", "Sim"].index(resposta_existente["Raiva"])
-    )
-
-    quem_raiva = ""
-    if raiva == "Sim":
-        quem_raiva = st.text_input(
-            "De quem?",
-            value=resposta_existente["Quem_raiva"] if resposta_existente else ""
-        )
-
-    # =============================
-    # ENVIO
-    # =============================
-    if st.button("Enviar"):
-        resposta = {
-            "Cliente": cliente,
-            "Data": get_data_hoje(),
-            "Idade": idade,
-            "Humor": humor,
-            "Raiva": raiva,
-            "Quem_raiva": quem_raiva
-        }
-
-        salvar_resposta_form1(resposta, editar=bool(resposta_existente))
-        st.success("Resposta salva com sucesso!")
-        st.session_state["pagina"] = "home"
-        st.rerun()
-
-
-# =============================
-# ROTEAMENTO
-# =============================
 if not st.session_state["logado"]:
     tela_login()
 
-elif st.session_state["pagina"] == "home":
-    tela_home()
+else:
+    if st.session_state["tipo"] == "cliente":
 
-elif st.session_state["pagina"] == "formulario":
-    if st.session_state.get("formulario_atual") == "F1":
-        tela_formulario_f1()
+        if st.session_state["pagina"] == "home":
+            tela_cliente()
+
+        elif st.session_state["pagina"] == "formulario":
+            if st.session_state.get("formulario_atual") == "F1":
+                tela_formulario_f1()
+
+    elif st.session_state["tipo"] == "mestre":
+        tela_mestre()
+
