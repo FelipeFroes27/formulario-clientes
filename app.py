@@ -9,7 +9,7 @@ gc = gspread.service_account_from_dict(
     st.secrets["google_credentials"]
 )
 
-PLANILHA = gc.open_by_key(st.secrets["sheet_id"])
+PLANILHA = gc.open("Banco de dados")
 
 ABA_USUARIOS = "USUARIOS"
 ABA_FORM_1 = "FORMULÁRIO 1"
