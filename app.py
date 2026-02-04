@@ -48,10 +48,10 @@ aba_usuarios = planilha.worksheet("Estados")
 # ÁREA DO CLIENTE
 # ===============================
 
-    st.title("Guerra de estados ⚔️")
-    st.write(f"Bem-vindo, Nome")
+st.title("Guerra de estados ⚔️")
+st.write(f"Bem-vindo, Nome")
 
-    st.text_input("Qual o seu nome?")
-    st.radio("Selecione o estado para participar da guerra:",["SP","RJ"])
+st.text_input("Qual o seu nome?")
+st.radio("Selecione o estado para participar da guerra:",["SP","RJ"])
     
 
