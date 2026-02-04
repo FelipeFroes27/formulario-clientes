@@ -7,8 +7,8 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import qrcode
-from pixqrcode import Payload
 from io import BytesIO
+import crcmod
 
 
 # ===============================
@@ -44,6 +44,35 @@ aba_usuarios = planilha.worksheet("Estados")
 
 
 # ===============================
+# FUNÇÃO PIX (PADRÃO BANCO CENTRAL)
+# ===============================
+
+def gerar_payload_pix(chave, nome, cidade, valor=None, txid="***"):
+    def campo(id, valor):
+        return f"{id}{len(valor):02d}{valor}"
+
+    payload = "000201"
+    payload += campo("26", campo("00", "BR.GOV.BCB.PIX") + campo("01", chave))
+    payload += campo("52", "0000")
+    payload += campo("53", "986")
+
+    if valor:
+        payload += campo("54", f"{valor:.2f}")
+
+    payload += campo("58", "BR")
+    payload += campo("59", nome[:25])
+    payload += campo("60", cidade[:15])
+    payload += campo("62", campo("05", txid))
+
+    payload += "6304"
+
+    crc16 = crcmod.predefined.mkCrcFun("crc-ccitt-false")
+    crc = format(crc16(payload.encode("utf-8")), "04X")
+
+    return payload + crc
+
+
+# ===============================
 # ÁREA DO CLIENTE
 # ===============================
 
@@ -51,25 +80,20 @@ st.title("Guerra de estados ⚔️")
 st.write("Bem-vindo, Nome")
 
 st.text_input("Qual o seu nome?")
-st.radio(
-    "Selecione o estado para participar da guerra:",
-    ["SP", "RJ"]
-)
+st.radio("Selecione o estado para participar da guerra:", ["SP", "RJ"])
 
 
 # ===============================
 # QR CODE PIX
 # ===============================
 
-pix = Payload(
-    pixkey="froesfelipe03@gmail.com",   # CHAVE PIX
-    merchant_name="GUERRA DE ESTADOS",
-    merchant_city="SAO PAULO",
-    amount=10.00,                      # remova essa linha se quiser valor livre
+payload_pix = gerar_payload_pix(
+    chave="froesfelipe03@gmail.com",
+    nome="GUERRA DE ESTADOS",
+    cidade="SAO PAULO",
+    valor=10.00,
     txid="GUERRA01"
 )
-
-payload_pix = pix.payload()
 
 qr = qrcode.make(payload_pix)
 
