@@ -55,7 +55,7 @@ st.write(f"Bem-vindo, Nome")
 st.text_input("Qual o seu nome?")
 st.radio("Selecione o estado para participar da guerra:",["SP","RJ"])
 
-felipe "froesfelipe03@gmail.com"
+felipe = "froesfelipe03@gmail.com"
 
 teste = qrcode.make(felipe)
 
