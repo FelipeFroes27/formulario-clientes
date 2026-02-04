@@ -7,6 +7,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import qrcode
+from pixqrcode import Payload
 from io import BytesIO
 
 
@@ -47,31 +48,34 @@ aba_usuarios = planilha.worksheet("Estados")
 # ===============================
 
 st.title("Guerra de estados ⚔️")
-st.write(f"Bem-vindo, Nome")
+st.write("Bem-vindo, Nome")
 
 st.text_input("Qual o seu nome?")
-st.radio("Selecione o estado para participar da guerra:", ["SP", "RJ"])
-
-
-# ===============================
-# QR CODE
-# ===============================
-
-felipe = "froesfelipe03@gmail.com"
-
-qr = qrcode.QRCode(
-    version=1,
-    box_size=10,
-    border=4
+st.radio(
+    "Selecione o estado para participar da guerra:",
+    ["SP", "RJ"]
 )
-qr.add_data(felipe)
-qr.make(fit=True)
 
-img = qr.make_image(fill_color="black", back_color="white")
+
+# ===============================
+# QR CODE PIX
+# ===============================
+
+pix = Payload(
+    pixkey="froesfelipe03@gmail.com",   # CHAVE PIX
+    merchant_name="GUERRA DE ESTADOS",
+    merchant_city="SAO PAULO",
+    amount=10.00,                      # remova essa linha se quiser valor livre
+    txid="GUERRA01"
+)
+
+payload_pix = pix.payload()
+
+qr = qrcode.make(payload_pix)
 
 buffer = BytesIO()
-img.save(buffer, format="PNG")
+qr.save(buffer, format="PNG")
 buffer.seek(0)
 
-st.image(buffer, caption="QR Code do participante", width=250)
+st.image(buffer, caption="Pague com PIX para entrar na guerra ⚔️", width=250)
 
