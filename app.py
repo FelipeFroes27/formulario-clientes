@@ -7,6 +7,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import qrcode
+from io import BytesIO
 
 
 # ===============================
@@ -42,10 +43,6 @@ aba_usuarios = planilha.worksheet("Estados")
 
 
 # ===============================
-# CAMPOS FORMULÁRIO 1
-# ===============================
-
-# ===============================
 # ÁREA DO CLIENTE
 # ===============================
 
@@ -53,12 +50,28 @@ st.title("Guerra de estados ⚔️")
 st.write(f"Bem-vindo, Nome")
 
 st.text_input("Qual o seu nome?")
-st.radio("Selecione o estado para participar da guerra:",["SP","RJ"])
+st.radio("Selecione o estado para participar da guerra:", ["SP", "RJ"])
+
+
+# ===============================
+# QR CODE
+# ===============================
 
 felipe = "froesfelipe03@gmail.com"
 
-qr_img = qrcode.make(felipe)
+qr = qrcode.QRCode(
+    version=1,
+    box_size=10,
+    border=4
+)
+qr.add_data(felipe)
+qr.make(fit=True)
 
-st.image(qr_img, caption="QR Code do participante")
+img = qr.make_image(fill_color="black", back_color="white")
 
+buffer = BytesIO()
+img.save(buffer, format="PNG")
+buffer.seek(0)
+
+st.image(buffer, caption="QR Code do participante", width=250)
 
