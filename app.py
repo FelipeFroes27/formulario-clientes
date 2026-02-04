@@ -57,8 +57,8 @@ st.radio("Selecione o estado para participar da guerra:",["SP","RJ"])
 
 felipe = "froesfelipe03@gmail.com"
 
-teste = qrcode.make(felipe)
+qr_img = qrcode.make(felipe)
 
-st.write(teste)
+st.image(qr_img, caption="QR Code do participante")
 
 
