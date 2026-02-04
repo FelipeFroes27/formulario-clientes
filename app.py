@@ -6,7 +6,7 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
-import Qrcode
+import qrcode
 
 
 # ===============================
@@ -54,5 +54,11 @@ st.write(f"Bem-vindo, Nome")
 
 st.text_input("Qual o seu nome?")
 st.radio("Selecione o estado para participar da guerra:",["SP","RJ"])
-    
+
+felipe "froesfelipe03@gmail.com"
+
+teste = qrcode.make(felipe)
+
+st.write(teste)
+
 
